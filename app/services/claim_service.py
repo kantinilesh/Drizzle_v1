@@ -13,9 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import (
     Claim, ClaimExplanation, FraudCheck, FraudFlag,
-    Policy, Worker, Notification,
+    Policy, Worker, Notification, WorkerActivityLog,
 )
 from app.services.risk_service import RiskService
+from app.services.admin.admin_analytics_service import AdminAnalyticsService
+from app.services.admin.admin_fraud_service import AdminFraudService
 
 log = logging.getLogger("drizzle.claim_service")
 
@@ -185,6 +187,47 @@ class ClaimService:
                 notification_type="alert",
             )
             self.db.add(notification)
+
+        await self.db.flush()
+
+        # ── Admin Integration Hooks ───────────────────────────────
+        # Activity log
+        activity = WorkerActivityLog(
+            worker_id=worker_id,
+            action="claim_trigger",
+            metadata_json={
+                "claim_id": claim.id,
+                "zone": claim_zone,
+                "fused_score": fused_score,
+                "status": claim_status,
+                "payout": payout_amount,
+            },
+        )
+        self.db.add(activity)
+
+        # Update daily + zone metrics
+        analytics = AdminAnalyticsService(self.db)
+        await analytics.update_daily_metrics(
+            claim_status=claim_status,
+            payout=payout_amount,
+            is_fraud=fraud_result["verdict"] != "clean",
+        )
+        await analytics.update_zone_metrics(
+            zone=claim_zone,
+            weather=scores.get("weather_score", 0.0),
+            traffic=scores.get("traffic_score", 0.0),
+            social=scores.get("social_score", 0.0),
+            payout=payout_amount,
+        )
+
+        # Create fraud alert if fraud detected
+        if fraud_result["verdict"] != "clean":
+            fraud_svc = AdminFraudService(self.db)
+            await fraud_svc.create_fraud_alert(
+                claim_id=claim.id,
+                fraud_score=fraud_result["fraud_score"],
+                verdict=fraud_result["verdict"],
+            )
 
         await self.db.flush()
 

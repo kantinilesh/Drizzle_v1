@@ -25,6 +25,10 @@ from app.mcp.mcp_client import check_mcp_health
 
 # Import all routers
 from app.routers import auth, workers, policies, claims, risk, notifications
+from app.routers.admin import (
+    admin_dashboard, admin_workers, admin_policies,
+    admin_claims, admin_fraud, admin_config,
+)
 
 # ─────────────────────────────────────────────────────────────────
 # LOGGING
@@ -53,6 +57,21 @@ async def lifespan(app: FastAPI):
     try:
         await init_db()
         log.info("✅ Database initialized")
+
+        # Seed default system config values
+        try:
+            from app.core.database import async_session
+            from app.models.models import SystemConfig
+            from sqlalchemy import select
+            async with async_session() as session:
+                for key, value in [("claim_threshold", "0.5"), ("fraud_threshold", "0.3")]:
+                    result = await session.execute(select(SystemConfig).where(SystemConfig.key == key))
+                    if not result.scalar_one_or_none():
+                        session.add(SystemConfig(key=key, value=value))
+                await session.commit()
+                log.info("✅ System config seeded")
+        except Exception as e:
+            log.warning(f"Config seeding skipped: {e}")
     except Exception as e:
         log.error(f"❌ Database initialization failed: {e}")
 
@@ -109,6 +128,14 @@ app.include_router(claims.router)
 app.include_router(risk.router)
 app.include_router(notifications.router)
 
+# Admin routers
+app.include_router(admin_dashboard.router)
+app.include_router(admin_workers.router)
+app.include_router(admin_policies.router)
+app.include_router(admin_claims.router)
+app.include_router(admin_fraud.router)
+app.include_router(admin_config.router)
+
 
 # ─────────────────────────────────────────────────────────────────
 # ROOT & HEALTH ENDPOINTS
@@ -149,6 +176,24 @@ async def root():
             "notifications": {
                 "GET /notifications": "Get all notifications",
                 "POST /notifications/read/{id}": "Mark notification as read",
+            },
+            "admin": {
+                "GET /admin/dashboard": "Admin control tower",
+                "GET /admin/workers": "List all workers",
+                "GET /admin/workers/{id}": "Worker detail + policies + claims",
+                "GET /admin/policies": "List all policies",
+                "POST /admin/policies/create": "Admin creates policy",
+                "GET /admin/claims": "List all claims",
+                "GET /admin/claims/{id}": "Claim detail + reasoning + fraud",
+                "POST /admin/claims/{id}/review": "Approve/reject claim",
+                "GET /admin/fraud-alerts": "Fraud alerts",
+                "POST /admin/fraud-alerts/{id}/resolve": "Resolve alert",
+                "GET /admin/risk": "Zone-level risk",
+                "GET /admin/config": "System config",
+                "PUT /admin/config": "Update config",
+                "GET /admin/analytics": "Analytics overview",
+                "GET /admin/notifications": "Admin notifications",
+                "GET /admin/audit-logs": "Audit trail",
             },
         },
     }

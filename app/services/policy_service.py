@@ -10,7 +10,7 @@ from typing import Optional, List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.models import Policy, Worker
+from app.models.models import Policy, Worker, WorkerActivityLog
 
 log = logging.getLogger("drizzle.policy_service")
 
@@ -156,6 +156,20 @@ class PolicyService:
             end_date=end_date,
         )
         self.db.add(policy)
+        await self.db.flush()
+
+        # Log worker activity for admin monitoring
+        activity = WorkerActivityLog(
+            worker_id=worker_id,
+            action="policy_purchase",
+            metadata_json={
+                "policy_id": policy.id,
+                "coverage_type": coverage_type,
+                "premium": premium,
+                "sum_insured": sum_insured,
+            },
+        )
+        self.db.add(activity)
         await self.db.flush()
 
         log.info(f"Policy created: {policy.id} for worker {worker_id}")

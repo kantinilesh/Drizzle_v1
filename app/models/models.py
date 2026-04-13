@@ -9,10 +9,12 @@ from datetime import datetime, timezone
 from sqlalchemy import (
     Boolean,
     Column,
+    Date,
     DateTime,
     Float,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
 )
@@ -290,3 +292,126 @@ class Notification(Base):
 
     # Relationships
     user = relationship("AuthUser", back_populates="notifications")
+
+
+# ─────────────────────────────────────────────────────────────────
+# ADMIN PORTAL MODELS
+# ─────────────────────────────────────────────────────────────────
+
+# 11. CLAIM REVIEWS
+class ClaimReview(Base):
+    __tablename__ = "claim_reviews"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    claim_id = Column(String, ForeignKey("claims.id", ondelete="CASCADE"), nullable=True)
+    reviewed_by = Column(String, ForeignKey("auth_users.id", ondelete="SET NULL"), nullable=True)
+    decision = Column(Text, nullable=True)        # approve / reject
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    # Relationships
+    claim = relationship("Claim", backref="reviews")
+    reviewer = relationship("AuthUser")
+
+
+# 12. WORKER ACTIVITY LOGS
+class WorkerActivityLog(Base):
+    __tablename__ = "worker_activity_logs"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    worker_id = Column(String, ForeignKey("workers.id", ondelete="CASCADE"), nullable=True)
+    action = Column(Text, nullable=True)           # login, claim_trigger, policy_purchase
+    metadata_json = Column("metadata", JSON, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    # Relationships
+    worker = relationship("Worker")
+
+
+# 13. FRAUD ALERTS
+class FraudAlert(Base):
+    __tablename__ = "fraud_alerts"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    claim_id = Column(String, ForeignKey("claims.id", ondelete="CASCADE"), nullable=True)
+    fraud_score = Column(Float, nullable=True)
+    verdict = Column(Text, nullable=True)          # suspicious / fraudulent
+    is_resolved = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=utcnow)
+    resolved_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    claim = relationship("Claim", backref="fraud_alerts")
+
+
+# 14. DAILY METRICS
+class DailyMetric(Base):
+    __tablename__ = "daily_metrics"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    date = Column(Date, unique=True, nullable=True)
+    total_claims = Column(Integer, nullable=True)
+    approved_claims = Column(Integer, nullable=True)
+    rejected_claims = Column(Integer, nullable=True)
+    total_payout = Column(Float, nullable=True)
+    fraud_count = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+
+# 15. ZONE METRICS
+class ZoneMetric(Base):
+    __tablename__ = "zone_metrics"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    zone = Column(Text, nullable=True)
+    date = Column(Date, nullable=True)
+    avg_weather_score = Column(Float, nullable=True)
+    avg_traffic_score = Column(Float, nullable=True)
+    avg_social_score = Column(Float, nullable=True)
+    total_claims = Column(Integer, nullable=True)
+    total_payout = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+
+# 16. SYSTEM CONFIG
+class SystemConfig(Base):
+    __tablename__ = "system_config"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    key = Column(Text, unique=True, nullable=True)
+    value = Column(Text, nullable=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+# 17. AUDIT LOGS
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    user_id = Column(String, ForeignKey("auth_users.id", ondelete="SET NULL"), nullable=True)
+    action = Column(Text, nullable=True)           # e.g. "approve_claim"
+    entity = Column(Text, nullable=True)           # claim / policy / worker
+    entity_id = Column(String, nullable=True)
+    old_data = Column(JSON, nullable=True)
+    new_data = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    # Relationships
+    user = relationship("AuthUser")
+
+
+# 18. ADMIN NOTIFICATIONS
+class AdminNotification(Base):
+    __tablename__ = "admin_notifications"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    admin_id = Column(String, ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=True)
+    admin_type = Column("type", Text, nullable=True)  # fraud_alert / system / claim_review
+    title = Column(Text, nullable=True)
+    message = Column(Text, nullable=True)
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=utcnow)
+
+    # Relationships
+    admin = relationship("AuthUser")
+

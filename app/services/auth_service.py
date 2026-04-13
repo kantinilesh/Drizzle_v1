@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token
 from app.core.config import settings
-from app.models.models import AuthUser, AuthSession
+from app.models.models import AuthUser, AuthSession, WorkerActivityLog, Worker
 
 log = logging.getLogger("drizzle.auth_service")
 
@@ -114,6 +114,18 @@ class AuthService:
         )
         self.db.add(session)
         await self.db.flush()
+
+        # Log worker activity for admin monitoring
+        if user.role == "worker":
+            w_result = await self.db.execute(select(Worker).where(Worker.id == user.id))
+            if w_result.scalar_one_or_none():
+                activity = WorkerActivityLog(
+                    worker_id=user.id,
+                    action="login",
+                    metadata_json={"email": email},
+                )
+                self.db.add(activity)
+                await self.db.flush()
 
         log.info(f"User logged in: {email}")
 
