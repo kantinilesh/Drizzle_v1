@@ -1,0 +1,132 @@
+/* Claims Styles */
+
+.claim-card {
+  margin-bottom: var(--space-md);
+  cursor: pointer;
+}
+
+.claim-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.claim-card-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.claim-card-icon {
+  font-size: 1.3rem;
+}
+
+.claim-card-cause {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.claim-card-date {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.claim-card-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.claim-card-amount {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.claim-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border-light);
+}
+
+.claim-card-confidence {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+/* Detail */
+.claim-detail-header {
+  text-align: center;
+  padding: var(--space-xl);
+}
+
+.claim-detail-approved {
+  border: 1px solid rgba(91, 140, 106, 0.15);
+}
+
+.claim-detail-rejected {
+  border: 1px solid rgba(196, 91, 91, 0.15);
+}
+
+.claim-detail-header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-sm);
+}
+
+.claim-detail-approved .claim-detail-header-icon {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.claim-detail-rejected .claim-detail-header-icon {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.claim-detail-cause {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-top: var(--space-sm);
+  color: var(--text-primary);
+}
+
+.claim-detail-payout {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin-top: var(--space-sm);
+}
+
+.claim-detail-score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.claim-detail-score-row:last-child {
+  border-bottom: none;
+}
+
+.claim-detail-score-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

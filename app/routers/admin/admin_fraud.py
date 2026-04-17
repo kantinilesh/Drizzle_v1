@@ -44,6 +44,24 @@ async def get_zone_risk(
     current_user: dict = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Aggregated zone-level risk from risk_signals table."""
+    """Aggregated zone-level risk from risk_signals table with level labels."""
     service = AdminAnalyticsService(db)
-    return await service.get_zone_risk_aggregation()
+    zones = await service.get_zone_risk_aggregation()
+
+    def level(score: float) -> str:
+        if score >= 0.6:
+            return "HIGH"
+        if score >= 0.35:
+            return "MEDIUM"
+        return "LOW"
+
+    return [
+        {
+            **z,
+            "weather_level": level(z["avg_weather"]),
+            "traffic_level": level(z["avg_traffic"]),
+            "social_level": level(z["avg_social"]),
+            "overall": level((z["avg_weather"] + z["avg_traffic"] + z["avg_social"]) / 3),
+        }
+        for z in zones
+    ]

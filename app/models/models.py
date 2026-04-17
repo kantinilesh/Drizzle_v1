@@ -1,3 +1,4 @@
+
 """
 SQLAlchemy ORM Models — EXACTLY matching the SQL schema for Drizzle.
 All column names, types, and relationships match the provided DDL.
@@ -22,14 +23,30 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
+from app.core.config import settings
 
 
 def utcnow():
-    return datetime.now(timezone.utc)
+    return datetime.utcnow()  # Naive UTC — required for TIMESTAMP WITHOUT TIME ZONE
 
 
 def gen_uuid():
     return str(uuid.uuid4())
+
+
+def UUIDCol(primary_key=False, fk=None, **kwargs):
+    """Returns the right column type for UUID depending on DB backend."""
+    nullable = kwargs.get("nullable", not primary_key)
+    if settings.is_sqlite:
+        if fk:
+            return Column(String, ForeignKey(fk, **{k: v for k, v in kwargs.items() if k in ('ondelete',)}), primary_key=primary_key, nullable=nullable)
+        return Column(String, primary_key=primary_key, default=gen_uuid if primary_key else None, nullable=nullable)
+    else:
+        if fk:
+            # Extract FK-specific kwargs
+            fk_kwargs = {k: v for k, v in kwargs.items() if k in ('ondelete',)}
+            return Column(PG_UUID(as_uuid=False), ForeignKey(fk, **fk_kwargs), primary_key=primary_key, nullable=nullable)
+        return Column(PG_UUID(as_uuid=False), primary_key=primary_key, default=gen_uuid if primary_key else None, nullable=nullable)
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -39,8 +56,9 @@ def gen_uuid():
 class AuthUser(Base):
     __tablename__ = "auth_users"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
+    id = UUIDCol(primary_key=True)
     email = Column(Text, unique=True, nullable=False, index=True)
+    full_name = Column(Text, nullable=True)
     phone = Column(Text, nullable=True)
     password = Column(Text, nullable=False)          # Plain text per requirement
     role = Column(Text, default="worker")
@@ -61,8 +79,8 @@ class AuthUser(Base):
 class AuthSession(Base):
     __tablename__ = "auth_sessions"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
-    user_id = Column(String, ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=True)
+    id = UUIDCol(primary_key=True)
+    user_id = UUIDCol(fk="auth_users.id", ondelete="CASCADE", nullable=True)
     token = Column(Text, nullable=False)
     expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=utcnow)
@@ -79,7 +97,7 @@ class AuthSession(Base):
 class Worker(Base):
     __tablename__ = "workers"
 
-    id = Column(String, ForeignKey("auth_users.id", ondelete="CASCADE"), primary_key=True)
+    id = UUIDCol(primary_key=True, fk="auth_users.id", ondelete="CASCADE")
     full_name = Column(Text, nullable=False)
     phone = Column(Text, nullable=True)
     zone = Column(Text, nullable=True)
@@ -108,8 +126,8 @@ class Worker(Base):
 class Policy(Base):
     __tablename__ = "policies"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
-    worker_id = Column(String, ForeignKey("workers.id", ondelete="CASCADE"), nullable=True)
+    id = UUIDCol(primary_key=True)
+    worker_id = UUIDCol(fk="workers.id", ondelete="CASCADE", nullable=True)
 
     coverage_type = Column(Text, nullable=True)
     coverage_days = Column(Integer, nullable=True)
@@ -138,10 +156,10 @@ class Policy(Base):
 class Claim(Base):
     __tablename__ = "claims"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
+    id = UUIDCol(primary_key=True)
 
-    policy_id = Column(String, ForeignKey("policies.id", ondelete="CASCADE"), nullable=True)
-    worker_id = Column(String, ForeignKey("workers.id", ondelete="CASCADE"), nullable=True)
+    policy_id = UUIDCol(fk="policies.id", ondelete="CASCADE", nullable=True)
+    worker_id = UUIDCol(fk="workers.id", ondelete="CASCADE", nullable=True)
 
     zone = Column(Text, nullable=True)
     lat = Column(Float, nullable=True)
@@ -181,8 +199,8 @@ class Claim(Base):
 class ClaimExplanation(Base):
     __tablename__ = "claim_explanations"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
-    claim_id = Column(String, ForeignKey("claims.id", ondelete="CASCADE"), nullable=True)
+    id = UUIDCol(primary_key=True)
+    claim_id = UUIDCol(fk="claims.id", ondelete="CASCADE", nullable=True)
 
     explanation = Column(Text, nullable=True)
     recommended_action = Column(Text, nullable=True)
@@ -200,8 +218,8 @@ class ClaimExplanation(Base):
 class FraudCheck(Base):
     __tablename__ = "fraud_checks"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
-    claim_id = Column(String, ForeignKey("claims.id", ondelete="CASCADE"), nullable=True)
+    id = UUIDCol(primary_key=True)
+    claim_id = UUIDCol(fk="claims.id", ondelete="CASCADE", nullable=True)
 
     gps_valid = Column(Boolean, nullable=True)
     gps_distance_km = Column(Float, nullable=True)
@@ -227,8 +245,8 @@ class FraudCheck(Base):
 class FraudFlag(Base):
     __tablename__ = "fraud_flags"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
-    claim_id = Column(String, ForeignKey("claims.id", ondelete="CASCADE"), nullable=True)
+    id = UUIDCol(primary_key=True)
+    claim_id = UUIDCol(fk="claims.id", ondelete="CASCADE", nullable=True)
 
     flag_type = Column(Text, nullable=True)
     severity = Column(Float, nullable=True)
@@ -247,9 +265,9 @@ class FraudFlag(Base):
 class RiskSignal(Base):
     __tablename__ = "risk_signals"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
+    id = UUIDCol(primary_key=True)
 
-    worker_id = Column(String, ForeignKey("workers.id", ondelete="CASCADE"), nullable=True)
+    worker_id = UUIDCol(fk="workers.id", ondelete="CASCADE", nullable=True)
     zone = Column(Text, nullable=True)
 
     weather_score = Column(Float, nullable=True)
@@ -277,9 +295,9 @@ class RiskSignal(Base):
 class Notification(Base):
     __tablename__ = "notifications"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
+    id = UUIDCol(primary_key=True)
 
-    user_id = Column(String, ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=True)
+    user_id = UUIDCol(fk="auth_users.id", ondelete="CASCADE", nullable=True)
 
     # Column named "type" in SQL, mapped as notification_type in Python
     notification_type = Column("type", Text, nullable=True)
@@ -302,9 +320,9 @@ class Notification(Base):
 class ClaimReview(Base):
     __tablename__ = "claim_reviews"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
-    claim_id = Column(String, ForeignKey("claims.id", ondelete="CASCADE"), nullable=True)
-    reviewed_by = Column(String, ForeignKey("auth_users.id", ondelete="SET NULL"), nullable=True)
+    id = UUIDCol(primary_key=True)
+    claim_id = UUIDCol(fk="claims.id", ondelete="CASCADE", nullable=True)
+    reviewed_by = UUIDCol(fk="auth_users.id", ondelete="SET NULL", nullable=True)
     decision = Column(Text, nullable=True)        # approve / reject
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=utcnow)
@@ -318,8 +336,8 @@ class ClaimReview(Base):
 class WorkerActivityLog(Base):
     __tablename__ = "worker_activity_logs"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
-    worker_id = Column(String, ForeignKey("workers.id", ondelete="CASCADE"), nullable=True)
+    id = UUIDCol(primary_key=True)
+    worker_id = UUIDCol(fk="workers.id", ondelete="CASCADE", nullable=True)
     action = Column(Text, nullable=True)           # login, claim_trigger, policy_purchase
     metadata_json = Column("metadata", JSON, nullable=True)
     created_at = Column(DateTime, default=utcnow)
@@ -332,8 +350,8 @@ class WorkerActivityLog(Base):
 class FraudAlert(Base):
     __tablename__ = "fraud_alerts"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
-    claim_id = Column(String, ForeignKey("claims.id", ondelete="CASCADE"), nullable=True)
+    id = UUIDCol(primary_key=True)
+    claim_id = UUIDCol(fk="claims.id", ondelete="CASCADE", nullable=True)
     fraud_score = Column(Float, nullable=True)
     verdict = Column(Text, nullable=True)          # suspicious / fraudulent
     is_resolved = Column(Boolean, default=False)
@@ -348,7 +366,7 @@ class FraudAlert(Base):
 class DailyMetric(Base):
     __tablename__ = "daily_metrics"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
+    id = UUIDCol(primary_key=True)
     date = Column(Date, unique=True, nullable=True)
     total_claims = Column(Integer, nullable=True)
     approved_claims = Column(Integer, nullable=True)
@@ -362,7 +380,7 @@ class DailyMetric(Base):
 class ZoneMetric(Base):
     __tablename__ = "zone_metrics"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
+    id = UUIDCol(primary_key=True)
     zone = Column(Text, nullable=True)
     date = Column(Date, nullable=True)
     avg_weather_score = Column(Float, nullable=True)
@@ -377,7 +395,7 @@ class ZoneMetric(Base):
 class SystemConfig(Base):
     __tablename__ = "system_config"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
+    id = UUIDCol(primary_key=True)
     key = Column(Text, unique=True, nullable=True)
     value = Column(Text, nullable=True)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
@@ -387,11 +405,11 @@ class SystemConfig(Base):
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
-    user_id = Column(String, ForeignKey("auth_users.id", ondelete="SET NULL"), nullable=True)
+    id = UUIDCol(primary_key=True)
+    user_id = UUIDCol(fk="auth_users.id", ondelete="SET NULL", nullable=True)
     action = Column(Text, nullable=True)           # e.g. "approve_claim"
     entity = Column(Text, nullable=True)           # claim / policy / worker
-    entity_id = Column(String, nullable=True)
+    entity_id = UUIDCol(nullable=True)
     old_data = Column(JSON, nullable=True)
     new_data = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=utcnow)
@@ -404,8 +422,8 @@ class AuditLog(Base):
 class AdminNotification(Base):
     __tablename__ = "admin_notifications"
 
-    id = Column(String, primary_key=True, default=gen_uuid)
-    admin_id = Column(String, ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=True)
+    id = UUIDCol(primary_key=True)
+    admin_id = UUIDCol(fk="auth_users.id", ondelete="CASCADE", nullable=True)
     admin_type = Column("type", Text, nullable=True)  # fraud_alert / system / claim_review
     title = Column(Text, nullable=True)
     message = Column(Text, nullable=True)

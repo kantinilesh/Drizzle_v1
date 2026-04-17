@@ -1,0 +1,105 @@
+/* Live Risk Styles */
+
+.live-risk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.live-risk-time {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-bottom: var(--space-lg);
+}
+
+.risk-gauge-card {
+  margin-bottom: var(--space-md);
+}
+
+.risk-gauge-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.risk-gauge-emoji {
+  font-size: 1.3rem;
+}
+
+.risk-gauge-label {
+  flex: 1;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.risk-gauge-visual {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+}
+
+.risk-gauge-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.risk-gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.risk-gauge-score {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.risk-gauge-desc {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: var(--space-md);
+}
+
+/* Animate spin for refresh */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Overall */
+.live-risk-overall {
+  text-align: center;
+  padding: var(--space-xl);
+  margin-top: var(--space-md);
+}
+
+.live-risk-overall-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--space-sm);
+  font-weight: 600;
+}
+
+.live-risk-overall-level {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.live-risk-overall-score {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 4px;
+}

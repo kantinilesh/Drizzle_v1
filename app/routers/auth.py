@@ -31,9 +31,11 @@ async def signup(req: SignupRequest, db: AsyncSession = Depends(get_db)):
     try:
         service = AuthService(db)
         result = await service.signup(
+            full_name=req.full_name,
             email=req.email,
             password=req.password,
             phone=req.phone,
+            role=req.role,
         )
         return AuthResponse(**result)
     except ValueError as e:

@@ -16,24 +16,47 @@ from app.core.config import settings
 log = logging.getLogger("drizzle.db")
 
 # ── Engine ────────────────────────────────────────────────────────
-_is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+_is_sqlite = settings.is_sqlite
 
 if _is_sqlite:
-    # SQLite doesn't support connection pooling options
+    log.info("🗄️  Using SQLite (local dev): drizzle_local.db")
     engine = create_async_engine(
         settings.DATABASE_URL,
         echo=settings.DEBUG,
         connect_args={"check_same_thread": False},
     )
 else:
-    # PostgreSQL with full pooling
+    _url = settings.DATABASE_URL
+    _masked = _url.split("@")[-1] if "@" in _url else _url[:40]
+    log.info(f"🐘  Using PostgreSQL @ {_masked}")
+
+    # Supabase uses PgBouncer transaction-mode pooler.
+    # asyncpg does NOT support ?sslmode= in the URL — it must go in connect_args.
+    # Also disable prepared statement cache (incompatible with PgBouncer).
+    import ssl as _ssl
+    _ssl_ctx = _ssl.create_default_context()
+    _ssl_ctx.check_hostname = False
+    _ssl_ctx.verify_mode = _ssl.CERT_NONE
+
+    _connect_args = {
+        "ssl": _ssl_ctx,                        # SSL for Supabase
+        "statement_cache_size": 0,              # Required for PgBouncer
+        "prepared_statement_cache_size": 0,
+    }
+
+    # Strip ?sslmode from URL if present (asyncpg rejects it)
+    if "sslmode" in _url:
+        from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
+        _parsed = urlparse(_url)
+        _qs = {k: v for k, v in parse_qs(_parsed.query).items() if k != "sslmode"}
+        _url = urlunparse(_parsed._replace(query=urlencode(_qs, doseq=True)))
+
     engine = create_async_engine(
-        settings.DATABASE_URL,
+        _url,
         echo=settings.DEBUG,
-        pool_size=10,
-        max_overflow=20,
         pool_pre_ping=True,
-        pool_recycle=3600,
+        pool_recycle=300,
+        connect_args=_connect_args,
     )
 
 # ── Session factory ──────────────────────────────────────────────

@@ -1,0 +1,106 @@
+/* Buy Policy Styles */
+
+.buy-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.buy-coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm);
+}
+
+.buy-coverage-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-md);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-xs);
+}
+
+.buy-coverage-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-medium);
+}
+
+.buy-coverage-active {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-dark) !important;
+  box-shadow: 0 2px 12px rgba(91, 140, 106, 0.15);
+}
+
+.buy-coverage-icon {
+  font-size: 1.5rem;
+}
+
+.buy-coverage-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.buy-premium-card {
+  text-align: center;
+  margin: var(--space-xl) 0;
+  padding: var(--space-xl);
+}
+
+.buy-premium-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.buy-premium-amount {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin-top: var(--space-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+}
+
+/* Success Screen */
+.buy-success {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-xl);
+}
+
+.buy-success-check {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-bottom: var(--space-lg);
+  box-shadow: 0 4px 24px rgba(91, 140, 106, 0.25);
+}
+
+.buy-success h2 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  color: var(--text-primary);
+}

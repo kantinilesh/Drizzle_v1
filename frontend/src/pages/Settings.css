@@ -1,0 +1,119 @@
+/* Settings Styles */
+
+.settings-user-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+}
+
+.settings-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(91, 140, 106, 0.2);
+}
+
+.settings-user-name {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.settings-user-email {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.settings-user-zone {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.settings-menu {
+  padding: 0;
+}
+
+.settings-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border-radius: var(--radius-md);
+}
+
+.settings-menu-item:hover {
+  background: var(--bg-hover);
+}
+
+.settings-menu-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.settings-menu-content {
+  flex: 1;
+}
+
+.settings-menu-label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.settings-menu-desc {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 1px;
+}
+
+.settings-logout {
+  margin-top: var(--space-xl);
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid rgba(196, 91, 91, 0.15);
+  padding: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.settings-logout:hover {
+  background: rgba(196, 91, 91, 0.12);
+}
+
+.settings-app-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: var(--space-xl);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}

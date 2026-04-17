@@ -103,7 +103,7 @@ class AdminAnalyticsService:
         result = await self.db.execute(
             select(
                 Claim.zone,
-                func.count(Claim.id).label("claim_count"),
+                func.count(Claim.id).label("total_claims"),
                 func.coalesce(func.sum(Claim.payout_amount), 0).label("total_payout"),
             )
             .where(Claim.zone.isnot(None), Claim.status == "approved")
@@ -112,7 +112,7 @@ class AdminAnalyticsService:
             .limit(10)
         )
         top_zones = [
-            {"zone": row[0], "claim_count": row[1], "total_payout": float(row[2])}
+            {"zone": row[0], "total_claims": row[1], "total_payout": float(row[2])}
             for row in result.all()
         ]
 
@@ -126,6 +126,25 @@ class AdminAnalyticsService:
         total_payout = (await self.db.execute(
             select(func.coalesce(func.sum(Claim.payout_amount), 0)).where(Claim.status == "approved")
         )).scalar() or 0.0
+
+        # Fraud count
+        total_fraud = (await self.db.execute(
+            select(func.count(FraudAlert.id))
+        )).scalar() or 0
+
+        # Top cause by primary_cause field
+        cause_result = await self.db.execute(
+            select(
+                Claim.primary_cause,
+                func.count(Claim.id).label("cnt"),
+            )
+            .where(Claim.primary_cause.isnot(None))
+            .group_by(Claim.primary_cause)
+            .order_by(func.count(Claim.id).desc())
+            .limit(1)
+        )
+        top_cause_row = cause_result.first()
+        top_cause = top_cause_row[0] if top_cause_row else "Weather"
 
         # Summary
         total_claims = (await self.db.execute(
@@ -144,6 +163,8 @@ class AdminAnalyticsService:
                 "total_claims": total_claims,
                 "approval_rate": round(total_approved / max(total_claims, 1) * 100, 1),
                 "avg_payout": round(float(total_payout) / max(total_approved, 1), 2),
+                "fraud_rate": round(total_fraud / max(total_claims, 1) * 100, 1),
+                "top_cause": top_cause,
             },
         }
 

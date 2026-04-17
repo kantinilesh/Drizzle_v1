@@ -1,0 +1,224 @@
+/* ================================
+   AUTH PAGES STYLES
+   ================================ */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  position: relative;
+  background: var(--bg-primary);
+}
+
+/* Subtle organic blobs — very faint */
+.auth-page::before {
+  content: '';
+  position: absolute;
+  top: -15%;
+  left: -15%;
+  width: 55%;
+  height: 55%;
+  background: radial-gradient(circle, rgba(91, 140, 106, 0.06) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.auth-page::after {
+  content: '';
+  position: absolute;
+  bottom: -15%;
+  right: -15%;
+  width: 45%;
+  height: 45%;
+  background: radial-gradient(circle, rgba(196, 125, 90, 0.05) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-back {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-bottom: var(--space-lg);
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-xs);
+}
+
+.auth-back:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Logo */
+.auth-logo {
+  text-align: center;
+  margin-bottom: var(--space-2xl);
+}
+
+.auth-logo-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-xl);
+  background: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-bottom: var(--space-md);
+  box-shadow: 0 4px 16px rgba(91, 140, 106, 0.25);
+}
+
+.auth-logo-text {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.auth-logo-sub {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Title */
+.auth-title {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.auth-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: var(--space-xl);
+}
+
+/* Form */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.auth-error {
+  background: var(--danger-bg);
+  border: 1px solid rgba(196, 91, 91, 0.15);
+  color: var(--danger);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: var(--space-md);
+}
+
+/* Input with icon */
+.input-icon-wrap {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+.input-with-icon {
+  padding-left: 42px !important;
+}
+
+.input-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.input-toggle:hover {
+  color: var(--text-secondary);
+}
+
+/* Remember / Forgot */
+.auth-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+}
+
+.auth-remember {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.auth-forgot {
+  font-size: 0.85rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.auth-forgot:hover {
+  color: var(--primary-dark);
+}
+
+/* Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: var(--space-lg) 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-light);
+}
+
+.auth-divider span {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+/* Footer */
+.auth-footer {
+  text-align: center;
+  margin-top: var(--space-xl);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.auth-footer a {
+  color: var(--primary);
+  font-weight: 600;
+}

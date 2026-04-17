@@ -1,0 +1,23 @@
+.profile-setup-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background: var(--bg-primary);
+}
+
+.profile-setup-container {
+  width: 100%;
+  max-width: 440px;
+}
+
+.profile-setup-header {
+  margin-bottom: var(--space-xl);
+}
+
+.profile-setup-sub {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}

@@ -14,9 +14,11 @@ from pydantic import BaseModel, EmailStr, Field
 # ═════════════════════════════════════════════════════════════════
 
 class SignupRequest(BaseModel):
+    full_name: Optional[str] = Field(None, max_length=100)
     email: EmailStr
     password: str = Field(..., min_length=4, max_length=128)
     phone: Optional[str] = Field(None, max_length=20)
+    role: str = Field("worker", pattern="^(worker|admin)$")
 
 
 class LoginRequest(BaseModel):
@@ -27,6 +29,7 @@ class LoginRequest(BaseModel):
 class AuthResponse(BaseModel):
     user_id: str
     email: str
+    full_name: Optional[str] = None
     phone: Optional[str] = None
     role: str
     token: str
@@ -36,6 +39,7 @@ class AuthResponse(BaseModel):
 class UserProfile(BaseModel):
     user_id: str
     email: str
+    full_name: Optional[str] = None
     phone: Optional[str] = None
     role: str
     is_active: bool

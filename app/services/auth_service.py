@@ -25,6 +25,7 @@ class AuthService:
 
     async def signup(
         self,
+        full_name: Optional[str],
         email: str,
         password: str,
         phone: Optional[str] = None,
@@ -44,6 +45,7 @@ class AuthService:
 
         # Create user
         user = AuthUser(
+            full_name=full_name,
             email=email,
             password=password,  # Plain text as required
             phone=phone,
@@ -73,6 +75,7 @@ class AuthService:
         return {
             "user_id": str(user.id),
             "email": user.email,
+            "full_name": user.full_name,
             "phone": user.phone,
             "role": user.role,
             "token": token,
