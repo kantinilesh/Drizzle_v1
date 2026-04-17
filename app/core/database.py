@@ -4,6 +4,7 @@ Supports both PostgreSQL (asyncpg) and SQLite (aiosqlite) backends.
 """
 
 import logging
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -91,6 +92,7 @@ async def init_db():
     """Create all tables from ORM metadata (dev convenience)."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await ensure_schema_compatibility(conn)
     log.info("Database tables ensured.")
 
 
@@ -98,3 +100,24 @@ async def close_db():
     """Dispose engine pool."""
     await engine.dispose()
     log.info("Database connection pool closed.")
+
+
+async def ensure_schema_compatibility(conn):
+    """
+    Backfill columns that may be missing from older databases.
+    create_all() does not alter existing tables, so this keeps legacy
+    local/Supabase schemas aligned with the current ORM model.
+    """
+    if settings.is_sqlite:
+        return
+
+    statements = [
+        "ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS full_name TEXT",
+        "ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS phone TEXT",
+        "ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'worker'",
+        "ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE auth_users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()",
+    ]
+
+    for statement in statements:
+        await conn.execute(text(statement))

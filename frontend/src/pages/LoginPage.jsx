@@ -22,8 +22,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await apiLogin(email, password);
-      login(res.user);
-      navigate(res.user.profile_completed ? '/dashboard' : '/profile-setup');
+      const user = res.user || JSON.parse(localStorage.getItem('drizzle_user') || 'null');
+      if (!user) throw new Error('Login succeeded, but user profile could not be loaded');
+      login(user);
+      navigate(user.profile_completed ? '/dashboard' : '/profile-setup');
     } catch (err) {
       setError(err.message || 'Login failed');
     } finally {

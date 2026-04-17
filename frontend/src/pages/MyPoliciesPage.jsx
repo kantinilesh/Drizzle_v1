@@ -8,10 +8,21 @@ import './Policies.css';
 export default function MyPoliciesPage() {
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    apiGetPolicies().then(setPolicies).finally(() => setLoading(false));
+    apiGetPolicies()
+      .then(setPolicies)
+      .catch((err) => {
+        if (err.message?.includes('Worker profile not found')) {
+          setPolicies([]);
+          setError('Complete your worker profile before viewing policies.');
+          return;
+        }
+        setError(err.message || 'Unable to fetch policies');
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -32,12 +43,18 @@ export default function MyPoliciesPage() {
       <div className="page">
         <h1 className="page-title">My Policies</h1>
 
+        {error && (
+          <div className="auth-error" style={{ marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
+
         {policies.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon"><Shield size={48} /></div>
             <p>No policies yet</p>
             <button className="btn btn-primary" onClick={() => navigate('/buy-policy')} style={{ marginTop: 16 }}>
-              Buy Your First Policy
+              {error ? 'Complete Profile / Buy Policy' : 'Buy Your First Policy'}
             </button>
           </div>
         ) : (

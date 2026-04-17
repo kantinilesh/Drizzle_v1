@@ -16,7 +16,7 @@ export default function ProfileSetupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { updateUser } = useAuth();
+  const { user, updateUser } = useAuth();
 
   const handleLocation = () => {
     setLocating(true);
@@ -37,6 +37,8 @@ export default function ProfileSetupPage() {
     setLoading(true);
     try {
       const profile = {
+        full_name: user?.full_name || 'Worker',
+        phone: user?.phone || '',
         vehicle_type: vehicleType,
         zone,
         gps_lat: 13.08,

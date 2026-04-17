@@ -6,7 +6,8 @@ import os
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
-load_dotenv(override=True)
+# Keep explicit shell / deployment environment variables higher priority than .env.
+load_dotenv(override=False)
 
 
 class Settings(BaseSettings):
@@ -78,4 +79,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-

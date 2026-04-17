@@ -13,10 +13,74 @@ import {
   calculatePremium,
 } from './mockData';
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const browserHost =
+  typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+
+const defaultApiBaseUrl =
+  browserHost === 'localhost' || browserHost === '127.0.0.1'
+    ? `${window.location.protocol}//${browserHost}:8000`
+    : '';
+
+export const API_BASE_URL = import.meta.env.VITE_API_URL || defaultApiBaseUrl;
 export const USE_MOCK = !API_BASE_URL;
 
 const delay = (ms = 600) => new Promise(resolve => setTimeout(resolve, ms));
+
+function normalizeAuthUser(payload = {}) {
+  return {
+    user_id: payload.user_id ?? payload.id ?? null,
+    id: payload.id ?? payload.user_id ?? null,
+    email: payload.email ?? '',
+    full_name: payload.full_name ?? '',
+    phone: payload.phone ?? '',
+    role: payload.role ?? 'worker',
+    profile_completed: Boolean(payload.profile_completed),
+  };
+}
+
+function formatCoverageTypeLabel(coverageType = '') {
+  const labels = {
+    comprehensive: 'Comprehensive',
+    weather: 'Weather Only',
+    traffic: 'Traffic Only',
+    social: 'Social Only',
+    standard: 'Standard',
+    premium: 'Premium',
+  };
+  return labels[coverageType] || coverageType || 'Policy';
+}
+
+function normalizePolicy(policy = {}) {
+  return {
+    ...policy,
+    policy_id: policy.policy_id ?? policy.id,
+    coverage_type_label: policy.coverage_type_label ?? formatCoverageTypeLabel(policy.coverage_type),
+    duration_days: policy.duration_days ?? policy.coverage_days ?? 0,
+    claims_count: policy.claims_count ?? 0,
+    total_claimed: policy.total_claimed ?? 0,
+    zone: policy.zone ?? '',
+  };
+}
+
+function normalizeClaim(claim = {}) {
+  const cause = claim.cause ?? claim.primary_cause ?? 'Risk';
+  const causeIcon = {
+    Weather: '🌧️',
+    Traffic: '🚦',
+    Social: '📢',
+    Risk: '⚠️',
+  }[cause] || '⚠️';
+
+  return {
+    ...claim,
+    claim_id: claim.claim_id ?? claim.id,
+    policy_id: claim.policy_id ?? claim.policy?.id ?? '',
+    cause,
+    cause_icon: claim.cause_icon ?? causeIcon,
+    payout: claim.payout ?? claim.payout_amount ?? 0,
+    fraud_check: claim.fraud_check ?? claim.fraud_verdict ?? '—',
+  };
+}
 
 // ── Fetch helper ──────────────────────────────────────────────────
 export async function fetchAPI(endpoint, options = {}) {
@@ -27,10 +91,21 @@ export async function fetchAPI(endpoint, options = {}) {
     ...options.headers,
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(
+        `Unable to reach the API at ${API_BASE_URL || 'the current origin'}. ` +
+        'Make sure the backend is running and that CORS allows your frontend URL.'
+      );
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     let errorMsg = `HTTP ${response.status}`;
@@ -64,7 +139,9 @@ export async function apiLogin(email, password) {
   });
   if (data.token) {
     localStorage.setItem('drizzle_token', data.token);
-    if (data.user) localStorage.setItem('drizzle_user', JSON.stringify(data.user));
+    const user = data.user ? normalizeAuthUser(data.user) : normalizeAuthUser(data);
+    localStorage.setItem('drizzle_user', JSON.stringify(user));
+    return { ...data, user };
   }
   return data;
 }
@@ -115,18 +192,20 @@ export async function apiGetMe() {
   try {
     const authUser = await fetchAPI('/auth/me');
     if (authUser.role === 'admin') {
-      localStorage.setItem('drizzle_user', JSON.stringify(authUser));
-      return authUser;
+      const normalized = normalizeAuthUser(authUser);
+      localStorage.setItem('drizzle_user', JSON.stringify(normalized));
+      return normalized;
     }
     // For workers, get richer profile data
     try {
       const workerData = await fetchAPI('/workers/me');
-      const merged = { ...authUser, ...workerData };
+      const merged = { ...normalizeAuthUser(authUser), ...workerData, profile_completed: true };
       localStorage.setItem('drizzle_user', JSON.stringify(merged));
       return merged;
     } catch {
-      localStorage.setItem('drizzle_user', JSON.stringify(authUser));
-      return authUser;
+      const normalized = normalizeAuthUser(authUser);
+      localStorage.setItem('drizzle_user', JSON.stringify(normalized));
+      return normalized;
     }
   } catch (e) {
     throw e;
@@ -251,7 +330,15 @@ export async function apiGetPolicies() {
     return [...MOCK_POLICIES];
   }
 
-  return await fetchAPI('/policies/my');
+  try {
+    const policies = await fetchAPI('/policies/my');
+    return Array.isArray(policies) ? policies.map(normalizePolicy) : [];
+  } catch (error) {
+    if (error.message?.includes('Worker profile not found')) {
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function apiGetPolicy(policyId) {
@@ -263,7 +350,7 @@ export async function apiGetPolicy(policyId) {
     return policy;
   }
 
-  return await fetchAPI(`/policies/${policyId}`);
+  return normalizePolicy(await fetchAPI(`/policies/${policyId}`));
 }
 
 // ── Claims ────────────────────────────────────────────────────────
@@ -291,7 +378,16 @@ export async function apiGetClaims() {
     return [...MOCK_CLAIMS];
   }
 
-  return await fetchAPI('/claims/my');
+  try {
+    const data = await fetchAPI('/claims/my');
+    const claims = Array.isArray(data) ? data : (data.claims || []);
+    return claims.map(normalizeClaim);
+  } catch (error) {
+    if (error.message?.includes('Worker profile not found')) {
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function apiGetClaim(claimId) {
@@ -302,7 +398,7 @@ export async function apiGetClaim(claimId) {
     return claim;
   }
 
-  return await fetchAPI(`/claims/${claimId}`);
+  return normalizeClaim(await fetchAPI(`/claims/${claimId}`));
 }
 
 // ── Notifications ─────────────────────────────────────────────────

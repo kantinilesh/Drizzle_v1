@@ -4,7 +4,7 @@ Aligned with SQL DDL schema.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Optional
 
 from sqlalchemy import select
@@ -15,6 +15,11 @@ from app.core.config import settings
 from app.models.models import AuthUser, AuthSession, WorkerActivityLog, Worker
 
 log = logging.getLogger("drizzle.auth_service")
+
+
+def utcnow_naive() -> datetime:
+    """Naive UTC for TIMESTAMP WITHOUT TIME ZONE columns."""
+    return datetime.utcnow()
 
 
 class AuthService:
@@ -65,7 +70,7 @@ class AuthService:
         session = AuthSession(
             user_id=user.id,
             token=token,
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=settings.JWT_EXPIRATION_HOURS),
+            expires_at=utcnow_naive() + timedelta(hours=settings.JWT_EXPIRATION_HOURS),
         )
         self.db.add(session)
         await self.db.flush()
@@ -113,7 +118,7 @@ class AuthService:
         session = AuthSession(
             user_id=user.id,
             token=token,
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=settings.JWT_EXPIRATION_HOURS),
+            expires_at=utcnow_naive() + timedelta(hours=settings.JWT_EXPIRATION_HOURS),
         )
         self.db.add(session)
         await self.db.flush()
